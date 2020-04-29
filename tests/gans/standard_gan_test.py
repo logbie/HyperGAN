@@ -4,7 +4,7 @@ from hypergan.ops import TensorflowOps
 from hypergan.search.default_configurations import DefaultConfigurations
 
 from hypergan import GAN
-from hypergan.generators.resize_conv_generator import ResizeConvGenerator
+from hypergan.generators.resizable_generator import ResizableGenerator
 import hypergan as hg
 import tensorflow as tf
 import hyperchamber as hc
@@ -46,9 +46,7 @@ class StandardGanTest(tf.test.TestCase):
     def test_default(self):
         with self.test_session():
             gan = GAN(inputs = MockInput())
-            gan.create()
-            self.assertEqual(type(gan.generator), ResizeConvGenerator)
-            self.assertEqual(type(gan.discriminator), PyramidDiscriminator)
+            self.assertEqual(type(gan.generator), ResizableGenerator)
 
     def test_train(self):
         with self.test_session():
@@ -59,7 +57,6 @@ class StandardGanTest(tf.test.TestCase):
     def test_train_updates_posterior(self):
         with self.test_session():
             gan = GAN(inputs = MockInput())
-            gan.create()
             prior_g = gan.session.run(gan.generator.weights()[0])
             prior_d = gan.session.run(gan.discriminator.weights()[0])
             gan.step()
@@ -78,7 +75,6 @@ class StandardGanTest(tf.test.TestCase):
             gan.loss = "l_override"
             gan.trainer = "t_override"
 
-            gan.create()
 
             self.assertEqual(gan.discriminator, "d_override")
             self.assertEqual(gan.generator, "g_override")

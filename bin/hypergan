@@ -6,13 +6,11 @@ import sys, os
 import hyperchamber as hc
 import hypergan as hg
 import hypergan.cli as cli
-from hypergan.gans.aligned_gan import AlignedGAN
-from hypergan.gans.autoencoder_gan import AutoencoderGAN
-from hypergan.gans.alpha_gan import AlphaGAN
 
 class CommandParser:
-    def common(self, parser):
-        parser.add_argument('directory', action='store', type=str, help='The location of your data.  Subdirectories are treated as different classes.  You must have at least 1 subdirectory.')
+    def common(self, parser, directory=True):
+        if directory:
+            parser.add_argument('directory', action='store', type=str, help='The location of your data.  Subdirectories are treated as different classes.  You must have at least 1 subdirectory.')
         self.common_flags(parser)
 
     def common_flags(self, parser):
@@ -24,22 +22,26 @@ class CommandParser:
         parser.add_argument('--crop', dest='crop', action='store_true', help='If your images are perfectly sized you can skip cropping.')
         parser.add_argument('--resize', dest='resize', action='store_true', help='If your images are perfectly sized you can skip resize.')
         parser.add_argument('--align', dest='align', help='Align classes.  Takes a directory of data to align with.')
-        parser.add_argument('--use_hc_io', type=bool, default=False, help='Set this to no unless you are feeling experimental.')
-        parser.add_argument('--save_every', type=int, default=10000, help='Saves the model every n steps.')
+        parser.add_argument('--save_every', type=int, default=-1, help='Saves the model every n steps.')
         parser.add_argument('--sample_every', type=int, default=5, help='Saves a sample every X steps.')
         parser.add_argument('--save_samples', action='store_true', help='Saves samples to the local `samples` directory.')
         parser.add_argument('--sampler', type=str, default='static_batch', help='Select a sampler.  Some choices: static_batch, batch, grid, progressive')
+        parser.add_argument('--sequential', dest='sequential', action='store_true', help='Input will not be shuffled.  Can be used to simulate online learning for streaming data')
         parser.add_argument('--ipython', type=bool, default=False, help='Enables iPython embedded mode.')
         parser.add_argument('--steps', type=int, default=-1, help='Number of steps to train for.  -1 is unlimited (default)')
         parser.add_argument('--noviewer', dest='viewer', action='store_false', help='Disables the display of samples in a window.')
-        parser.add_argument('--autoencode', dest='autoencode', action='store', help='Disables the display of samples in a window.')
+        parser.add_argument('--viewer_size', '-z', type=float, dest='viewer_size', default=1, help='Size of the viewer window as a multiplier. WARNING: values above 60 may cause crashes')
         parser.add_argument('--classloss', dest='classloss', action='store_true', help='Enable class loss.  You must have multiple subfolders, one for each class')
         parser.add_argument('--list-templates', '-l', dest='list_templates', action='store_true', help='List available templates.')
+        parser.add_argument('--debug', dest='debug', action='store_true', help='Start the tensorflow debugger.')
+        parser.add_argument('--version', action='version', version='%(prog)s 0.10.0 alpha')
+        parser.add_argument('--nomenu', dest='menu', action='store_false', help='Disables the file menu.')
 
     def get_parser(self):
         parser = argparse.ArgumentParser(description='Train, run, and deploy your GANs.', add_help=True)
         subparsers = parser.add_subparsers(dest='method')
         train_parser = subparsers.add_parser('train')
+        test_parser = subparsers.add_parser('test')
         sample_parser = subparsers.add_parser('sample')
         build_parser = subparsers.add_parser('build')
         new_parser = subparsers.add_parser('new')
@@ -47,12 +49,17 @@ class CommandParser:
         self.common_flags(parser)
         self.common(sample_parser)
         self.common(train_parser)
+        self.common(test_parser, directory=False)
         self.common(build_parser)
         self.common(new_parser)
 
         return parser
 
 args = CommandParser().get_parser().parse_args()
+
+if args.method == 'train' and args.save_every == -1 and not args.viewer:
+    print("Error, there is no way to save the model.  Refusing to run.  Please add --save_every N")
+    exit(1)
 
 if args.size:
     size = [int(x) for x in args.size.split("x")] + [None, None, None]
@@ -62,20 +69,30 @@ width = size[0] or 64
 height = size[1] or 64
 channels = size[2] or 3
 
-config = args.config or 'default'
-config_filename = hg.Configuration.find(config+'.json')
+config_name = args.config or 'default'
+config_filename = hg.Configuration.find(config_name)
 config = hc.Selector().load(config_filename)
+if 'inherit' in config:
+    base_filename = hg.Configuration.find(config['inherit']+'.json')
+    base_config = hc.Selector().load(base_filename)
+    config = {**base_config, **config}
 
 
 if args.list_templates:
     configs = hg.Configuration.list()
     for config in configs:
-        template = hg.Configuration.load(config+'.json', verbose=False)
+        try:
+            template = hg.Configuration.load(config+'.json', verbose=False)
+        except Exception as e:
+            template = hc.Config({"description": str(e), "publication": "error"})
         print("%-30s - %-60s" %  (config, str(template.description)+"("+str(template.publication)+")"))
+        if template.runtime and "train" in template.runtime:
+            print("  > %s" %  (template.runtime["train"]))
     exit(0)
 if not args.align:
-    if args.method == 'new':
-        gan = hg.GAN(config=config, inputs=None)
+    if args.method == 'new' or args.method == 'test':
+        gan = None
+        pass
 
     else:
         inputs = hg.inputs.image_loader.ImageLoader(args.batch_size)
@@ -83,40 +100,36 @@ if not args.align:
               channels=channels, 
               format=args.format,
               crop=args.crop,
+              sequential=args.sequential,
               width=width,
               height=height,
               resize=args.resize)
 
-        gan = hg.GAN(config=config, inputs=inputs)
+        gan = hg.GAN(config=config, inputs=inputs, debug=args.debug)
+        gan.args = args
+        gan.x_width = width
+        gan.x_height = height
+        gan.x_channels = channels
+        gan.name = config_name
 else:
-    inputs = hg.inputs.image_loader.ImageLoader(args.batch_size)
-    inputs.create(args.directory,
+    inputs = hg.inputs.multi_image_loader.MultiImageLoader(args.batch_size)
+    inputs.create([args.directory, args.align],
           channels=channels, 
           format=args.format,
+          sequential=args.sequential,
           crop=args.crop,
           width=width,
           height=height,
           resize=args.resize)
 
-    inputs2 = hg.inputs.image_loader.ImageLoader(args.batch_size)
-    inputs2.create(args.align,
-          channels=channels, 
-          format=args.format,
-          crop=args.crop,
-          width=width,
-          height=height,
-          resize=args.resize)
-
-    class AlignedInput():
-        def __init__(self, input1, input2):
-            self.x = input1.x
-            self.xa = input1.x
-            self.xb = input2.x
-            self.y = input1.y
-
-    aligned_input = AlignedInput(inputs, inputs2)
-    gan = AlignedGAN(config=config, inputs=aligned_input)
+    gan = hg.GAN(config=config, inputs=inputs)
+    gan.args = args
+    gan.x_width = width
+    gan.x_height = height
+    gan.x_channels = channels
+    gan.name = config_name
 
 
 gancli = cli.CLI(gan, args=vars(args))
+del gan
 gancli.run()

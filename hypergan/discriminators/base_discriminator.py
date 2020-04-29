@@ -2,41 +2,30 @@ from hypergan.gan_component import GANComponent
 import tensorflow as tf
 
 class BaseDiscriminator(GANComponent):
-    def create(self, net=None, x=None, g=None):
+    def __init__(self, gan, config, name=None, input=None, reuse=None, features=None):
+        self.input = input
+        self.name = name
+        self.features = features
+        GANComponent.__init__(self, gan, config, name=name, reuse=reuse)
+
+    def create(self, net=None):
         config = self.config
         gan = self.gan
         ops = self.ops
 
-        if net is None:
-            if x is None:
-                x = gan.inputs.x
-            if g is None:
-                g = gan.generator.sample
-
-            x, g = self.resize(config, x, g)
-            net = tf.concat(axis=0, values=[x, g])
-            net = self.layer_filter(net)
+        net = net or self.input
 
         net = self.build(net)
         self.sample = net
         return net
 
-    def reuse(self, net=None, x=None, g=None):
+    def reuse(self, net=None, **opts):
         config = self.config
         gan = self.gan
         ops = self.ops
 
-        if net is None:
-            if x is None:
-                x or gan.inputs.x
-            if g is None:
-                g or gan.generator.sample
-
-            x, g = self.resize(config, x, g)
-            net = self.combine_filter(config, x, g)
-
         self.ops.reuse()
-        net = self.build(net)
+        net = self.build(net, **opts)
         self.ops.stop_reuse()
 
         return net
@@ -65,22 +54,4 @@ class BaseDiscriminator(GANComponent):
         else:
             return x, g
 
-    def layer_filter(self, net):
-        config = self.config
-        gan = self.gan
-        ops = self.ops
-        if 'layer_filter' in config and config.layer_filter is not None:
-            print("[discriminator] applying layer filter", config['layer_filter'])
-            stacks = ops.shape(net)[0] // gan.batch_size()
-            filters = []
-            for stack in range(stacks):
-                piece = tf.slice(net, [stack * gan.batch_size(), 0,0,0], [gan.batch_size(), -1, -1, -1])
-                filters.append(config.layer_filter(gan, self.config, piece))
-            layer = tf.concat(axis=0, values=filters)
-            net = tf.concat(axis=3, values=[net, layer])
-        return net
 
-    def progressive_enhancement(self, config, net, xg):
-        if 'progressive_enhancement' in config and config.progressive_enhancement and xg is not None:
-            net = tf.concat(axis=3, values=[net, xg])
-        return net

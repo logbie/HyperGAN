@@ -11,7 +11,7 @@ setup(
   name = 'hypergan',
   packages = ['hypergan']+subpackages,
   include_package_data=True,
-  version = '0.9.5',
+  version = '0.10.1',
   description = 'A customizable generative adversarial network with reproducible configurations.  Build your own content generator.',
   author = 'Martyn Garcia, Mikkel Garcia',
   author_email = 'mikkel@255bits.com',
@@ -35,6 +35,6 @@ setup(
       'Operating System :: Unix',
       'Operating System :: MacOS',
       ],
-  platforms = ["Linux", "Mac OS-X", "Unix"],
-  scripts = ['bin/hypergan']
+  platforms = ["Linux", "Mac OS-X", "Unix", "Windows"],
+  scripts = ['bin/hypergan', 'bin/hypergan.cmd']
 )

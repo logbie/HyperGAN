@@ -3,114 +3,154 @@ import numpy as np
 import tensorflow as tf
 
 class BaseLoss(GANComponent):
-    def __init__(self, gan, config, discriminator=None, generator=None):
-        GANComponent.__init__(self, gan, config)
-        self.metrics = {}
+    def __init__(self, gan, config, discriminator=None, generator=None, x=None, split=2, d_fake=None, d_real=None, reuse=False, name="BaseLoss"):
         self.sample = None
         self.ops = None
-        self.discriminator = discriminator
+        self.reuse=reuse
+        self.x = x
+        self.d_fake = d_fake
+        self.d_real = d_real
+        self.discriminator = discriminator or gan.discriminator
         self.generator = generator
+        self.split = split
+        GANComponent.__init__(self, gan, config, name=name)
 
-    def create(self, split=2):
+    def reuse(self, d_real=None, d_fake=None):
+        self.discriminator.ops.reuse()
+        net = self._create(d_real, d_fake)
+        self.discriminator.ops.stop_reuse()
+        return net
+
+
+    def create(self):
         gan = self.gan
         config = self.config
         ops = self.gan.ops
-        
-        if self.discriminator is None:
-            net = gan.discriminator.sample
-        else:
+        split = self.split
+        d_real = self.d_real
+        d_fake = self.d_fake
+
+        d_loss = None
+        g_loss = None
+        if d_real is None or d_fake is None:
+            # Not passed in, lets populate d_real/d_fake
+
             net = self.discriminator.sample
 
-        if split == 2:
-            d_real, d_fake = self.split_batch(net, split)
+            ds = self.split_batch(net, split)
+            d_real = ds[0]
+            d_fake = tf.add_n(ds[1:])/(len(ds)-1)
             d_loss, g_loss = self._create(d_real, d_fake)
-        elif split == 3:
-            d_real, d_fake, d_fake2 = self.split_batch(net, split)
+        else:
             d_loss, g_loss = self._create(d_real, d_fake)
-            d_loss2, g_loss2 = self._create(d_real, d_fake2)
-            g_loss += g_loss2
-            d_loss += d_loss2
-            #does this double the signal of d_real?
 
+        d_regularizers = []
+        g_regularizers = []
+        d_loss_features = d_loss
+        g_loss_features = g_loss
+        self.d_loss_features = d_loss_features
+        self.g_loss_features = g_loss_features
 
-        if d_loss is not None:
-            d_loss = ops.squash(d_loss, tf.reduce_mean) #linear doesn't work with this, so we cant pass config.reduce
-            self.metrics['d_loss'] = d_loss
+        if config.random_penalty:
+            gp = self.random_penalty(d_fake, d_real)
+            d_regularizers.append(gp)
+            self.add_metric('random_penalty', ops.squash(gp, tf.reduce_mean))
 
-            if config.minibatch:
-                d_loss += self.minibatch(net)
+        if self.gan.config.infogan and not hasattr(self.gan, 'infogan_q'):
+            sample = self.gan.generator.sample
+            d = self.gan.create_component(self.gan.config.discriminator, name="discriminator", input=sample, reuse=True, features=[tf.zeros([1,16,16,256])])
+            last_layer = d.controls['infogan']
+            q = self.gan.create_component(self.gan.config.infogan, input=(self.gan.discriminator.controls['infogan']), name='infogan')
+            self.gan.infogan_q=q
+            std_cont = tf.sqrt(tf.exp(q.sample))
+            true = self.gan.uniform_distribution.z
+            mean = tf.reshape(q.sample, self.ops.shape(true))
+            std_cont = tf.reshape(std_cont, self.ops.shape(true))
+            eps = (true - mean) / (std_cont + 1e-8)
+            continuous = -tf.reduce_mean( -0.5 * np.log(2*np.pi)- tf.log(std_cont+1e-8)*tf.square(eps), reduction_indices=1)
+            if self.gan.config.infogan.flipped:
+                continuous = -continuous
 
-            if config.gradient_penalty:
-                gp = self.gradient_penalty()
-                self.metrics['gradient_penalty'] = gp
-                print("Gradient penalty applied")
-                d_loss += gp
+            self.metrics['cinfo']=ops.squash(continuous)
+            d_regularizers.append(continuous)
 
+        d_regularizers += self.d_regularizers()
+        g_regularizers += self.g_regularizers()
+
+        print("prereg", d_loss)
+        if len(d_regularizers) > 0:
+            d_loss += tf.add_n(d_regularizers)
+        if len(g_regularizers) > 0:
+            g_loss += tf.add_n(g_regularizers)
+
+        d_loss = ops.squash(d_loss, config.reduce or tf.reduce_mean) #linear doesn't work with this
+
+        # TODO: Why are we squashing before gradient penalty?
+        self.add_metric('d_loss', d_loss)
         if g_loss is not None:
-            g_loss = ops.squash(g_loss, tf.reduce_mean)
-            self.metrics['g_loss'] = g_loss
-
-        self.metrics = self.metrics or sample_metrics
+            g_loss = ops.squash(g_loss, config.reduce or tf.reduce_mean)
+            self.add_metric('g_loss', g_loss)
 
         self.sample = [d_loss, g_loss]
         self.d_loss = d_loss
         self.g_loss = g_loss
+        self.d_fake = d_fake
+        self.d_real = d_real
 
         return self.sample
 
-    # This is openai's implementation of minibatch regularization
-    def minibatch(self, net):
-        discriminator = self.discriminator or self.gan.discriminator
-        ops = discriminator.ops
+    def d_regularizers(self):
+        return []
+
+    def g_regularizers(self):
+        return []
+
+    def rothk_penalty(self, d_real, d_fake):
         config = self.config
-        batch_size = ops.shape(net)[0]
-        single_batch_size = batch_size//2
-        n_kernels = config.minibatch_kernels or 300
-        dim_per_kernel = config.dim_per_kernel or 50
-        print("[discriminator] minibatch from", net, "to", n_kernels*dim_per_kernel)
-        x = ops.linear(net, n_kernels * dim_per_kernel)
-        activation = tf.reshape(x, (batch_size, n_kernels, dim_per_kernel))
+        g_sample = self.gan.uniform_sample
+        x = self.gan.inputs.x
+        gradx = tf.gradients(d_real, [x])[0]
+        gradg = tf.gradients(d_fake, [g_sample])[0]
+        gradx = tf.reshape(gradx, [self.ops.shape(gradx)[0], -1])
+        gradg = tf.reshape(gradg, [self.ops.shape(gradg)[0], -1])
+        gradx_norm = tf.norm(gradx, axis=1, keep_dims=True)
+        gradg_norm = tf.norm(gradg, axis=1, keep_dims=True)
+        if int(gradx_norm.get_shape()[0]) != int(d_real.get_shape()[0]):
+            print("Condensing along batch for rothk")
+            gradx_norm = tf.reduce_mean(gradx_norm, axis=0)
+            gradg_norm = tf.reduce_mean(gradg_norm, axis=0)
+        gradx = tf.square(gradx_norm) * tf.square(1-tf.nn.sigmoid(d_real))
+        gradg = tf.square(gradg_norm) * tf.square(tf.nn.sigmoid(d_fake))
+        loss = gradx + gradg
+        loss *= config.rothk_lambda or 1
+        if config.rothk_decay:
+            decay_function = config.decay_function or tf.train.exponential_decay
+            decay_steps = config.decay_steps or 50000
+            decay_rate = config.decay_rate or 0.9
+            decay_staircase = config.decay_staircase or False
+            global_step = tf.train.get_global_step()
+            loss = decay_function(loss, global_step, decay_steps, decay_rate, decay_staircase)
 
-        big = np.zeros((batch_size, batch_size))
-        big += np.eye(batch_size)
-        big = tf.expand_dims(big, 1)
-        big = tf.cast(big,dtype=ops.dtype)
+        return loss
 
-        abs_dif = tf.reduce_sum(tf.abs(tf.expand_dims(activation,3) - tf.expand_dims(tf.transpose(activation, [1, 2, 0]), 0)), 2)
-        mask = 1. - big
-        masked = tf.exp(-abs_dif) * mask
-        def half(tens, second):
-            m, n, _ = tens.get_shape()
-            m = int(m)
-            n = int(n)
-            return tf.slice(tens, [0, 0, second * single_batch_size], [m, n, single_batch_size])
-
-        f1 = tf.reduce_sum(half(masked, 0), 2) / tf.reduce_sum(half(mask, 0))
-        f2 = tf.reduce_sum(half(masked, 1), 2) / tf.reduce_sum(half(mask, 1))
-
-        return ops.squash(ops.concat([f1, f2]))
-
-    def gradient_penalty(self):
+    def random_penalty(self, d_fake, d_real):
         config = self.config
         gan = self.gan
+        ops = self.gan.ops
         gradient_penalty = config.gradient_penalty
-        if has_attr(gan.inputs, 'gradient_penalty_label'):
-            x = gan.inputs.gradient_penalty_label
-        else:
-            x = gan.inputs.x
-        generator = self.generator or gan.generator
-        g = generator.sample
-        discriminator = self.discriminator or gan.discriminator
-        shape = [1 for t in g.get_shape()]
+        x = self.x 
+        if x is None:
+            x=gan.inputs.x
+        shape = [1 for t in ops.shape(x)]
         shape[0] = gan.batch_size()
         uniform_noise = tf.random_uniform(shape=shape,minval=0.,maxval=1.)
-        print("[gradient penalty] applying x:", x, "g:", g, "noise:", uniform_noise)
-        interpolates = x + uniform_noise * (g - x)
-        reused_d = discriminator.reuse(interpolates)
-        gradients = tf.gradients(reused_d, [interpolates])[0]
-        penalty = tf.sqrt(tf.reduce_sum(tf.square(gradients), axis=1))
-        penalty = tf.reduce_mean(tf.square(penalty - 1.))
-        return float(gradient_penalty) * penalty
+        mask = tf.cast(tf.greater(0.5, uniform_noise), tf.float32)
+        #interpolates = x * mask + g * (1-mask)
+        d = d_fake *(1-mask) + d_real * mask#discriminator.reuse(interpolates)
+        offset = config.random_penalty_offset or -0.8
+        penalty = tf.square(d - offset)
+        return penalty
+
 
     def sigmoid_kl_with_logits(self, logits, targets):
        # broadcasts the same target value across the whole batch

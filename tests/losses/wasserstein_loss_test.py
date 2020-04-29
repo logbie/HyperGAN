@@ -13,14 +13,13 @@ loss_config = {'test': True, 'reduce':'reduce_mean', 'labels': [0,1,0]}
 class WassersteinLossTest(tf.test.TestCase):
     def test_config(self):
         with self.test_session():
-            loss = WassersteinLoss(hg.GAN(), loss_config)
+            loss = WassersteinLoss(mock_gan(), loss_config)
             self.assertTrue(loss.config.test)
 
     def test_create(self):
         with self.test_session():
             gan = mock_gan()
 
-            gan.create()
             loss = WassersteinLoss(gan, loss_config)
             d_loss, g_loss = loss.create()
             d_shape = gan.ops.shape(d_loss)

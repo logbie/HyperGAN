@@ -1,105 +1,175 @@
-# HyperGAN 0.9 
+# README
 
-[![CircleCI](https://circleci.com/gh/255BITS/HyperGAN/tree/master.svg?style=svg)](https://circleci.com/gh/255BITS/HyperGAN/tree/master)
+## HyperGAN 0.10
 
-A composable GAN API and CLI.  Built for developers, researchers, and artists.
+[![docs](https://img.shields.io/badge/gitbook-docs-yellowgreen)](https://hypergan.gitbook.io/hypergan/) [![Discord](https://img.shields.io/badge/discord-join%20chat-brightgreen.svg)](https://discord.gg/t4WWBPF) [![Twitter](https://img.shields.io/badge/twitter-follow-blue.svg)](https://twitter.com/hypergan)
 
-HyperGAN is currently in open beta.
+A composable GAN API and CLI. Built for developers, researchers, and artists.
+
+0.10 is now available in pip. Installation instructions and support are available in our [discord](https://discord.gg/t4WWBPF)
+
+HyperGAN is in open beta.
 
 ![Colorizer 0.9 1](https://s3.amazonaws.com/hypergan-apidocs/0.9.0-images/colorizer-2.gif)
 
-_Logos generated with [examples/colorizer](#examples),  AlphaGAN, and the RandomWalk sampler_
+_Logos generated with_ [_examples/colorizer_](./#examples)
 
-# Table of contents
+See more on the [hypergan youtube](https://www.youtube.com/channel/UCU33XvBbMnS8002_NB7JSvA)
 
-* [About](#about)
-* [Showcase](#showcase)
-* [Documentation](#documentation)
-* [Changelog](#changelog)
-* [Quick start](#quick-start)
-  * [Minimum Requirements](#minimum-requirements)
-  * [Create a new project](#create-a-new-project)
-  * [Install](#install)
-  * [Train](#train)
-  * [Increasing Performance](#increasing-performance)
-  * [Development Mode](#development-mode)
-  * [Running on CPU](#running-on-cpu)
-* [The pip package hypergan](#the-pip-package-hypergan)
- * [Training](#training)
- * [Sampling](#sampling)
-* [API](API)
-  * [Examples](#examples)
-  * [Search](#search)
-* [Configuration](#configuration)
-  * [Usage](#usage)
-  * [Architecture](#architecture)
-  * [GANComponent](#GANComponent)
-  * [Generator](#generator)
-  * [Encoders](#encoders)
-  * [Discriminators](#discriminators)
-  * [Losses](#losses)
-   * [WGAN](#wgan)
-   * [LS-GAN](#ls-gan)
-   * [Standard GAN and Improved GAN](#standard-gan-and-improved-gan)
-   * [Categories](#categorical-loss)
-   * [Supervised](#supervised-loss)
-  * [Trainers](#trainers)
-* [Datasets](#datasets)
-  * [Unsupervised learning](#unsupervised-learning)
-  * [Supervised learning](#supervised-learning)
-  * [Creating a Dataset](#creating-a-dataset)
-  * [Downloadable Datasets](#downloadable-datasets)
-* [Contributing](#contributing)
-* [Versioning](#Versioning)
-* [Sources](#sources)
-* [Papers](#papers)
-* [Citation](#citation)
+## Table of contents
 
-# About
+* [About](./#about)
+* [Showcase](./#showcase)
+* [Documentation](./#documentation)
+* [Changelog](./#changelog)
+* [Quick start](./#quick-start)
+  * [Requirements](./#requirements)
+  * [Install](./#install)
+  * [Testing install](./#testing-install)
+  * [Train](./#train)
+  * [Development Mode](./#development-mode)
+  * [Running on CPU](./#running-on-cpu)
+* [The pip package hypergan](./#the-pip-package-hypergan)
+  * [Training](./#training)
+  * [Sampling](./#sampling)
+* [API](https://github.com/HyperGAN/HyperGAN/tree/2170598c5c299e7b8d600a6e9a7db0f1d0bf36b6/API/README.md)
+  * [Examples](./#examples)
+* [Datasets](./#datasets)
+  * [Creating a Dataset](./#creating-a-dataset)
+  * [Downloadable Datasets](./#downloadable-datasets)
+  * [Cleaning up data](./#cleaning-up-data)
+* [Contributing](./#contributing)
+* [Versioning](./#Versioning)
+* [Sources](./#sources)
+* [Papers](./#papers)
+* [Citation](./#citation)
 
-Generative Adversarial Networks consist of 2 learning systems that learn together.  HyperGAN implements these learning systems in Tensorflow with deep learning.
+## About
 
-For an introduction, see here [http://blog.aylien.com/introduction-generative-adversarial-networks-code-tensorflow/](http://blog.aylien.com/introduction-generative-adversarial-networks-code-tensorflow/)
+Generative Adversarial Networks consist of 2 learning systems that learn together. HyperGAN implements these learning systems in Tensorflow with deep learning.
 
-HyperGAN is currently in open beta.
+For an introduction to GANs, see [http://blog.aylien.com/introduction-generative-adversarial-networks-code-tensorflow/](http://blog.aylien.com/introduction-generative-adversarial-networks-code-tensorflow/)
 
-# Showcase
+HyperGAN is a community project. GANs are a very new and active field of research. Join the community [discord](https://discord.gg/t4WWBPF).
 
-![Colorizer 0.9 3](https://s3.amazonaws.com/hypergan-apidocs/0.9.0-images/colorizer-1.gif)
-![Colorizer 0.9 3](https://s3.amazonaws.com/hypergan-apidocs/0.9.0-images/colorizer-3.gif)
+### Features
 
-<img src='https://raw.githubusercontent.com/255BITS/HyperGAN/master/doc/face-manifold-0.8.png'/>
+* Community project
+* Unsupervised learning
+* Transfer learning
+* Online learning
+* Dataset agnostic
+* Reproducible architectures using json configurations
+* Domain Specific Language to define custom architectures
+* GUI\(pygame and tk\)
+* API
+* CLI
 
-0.9 samples are still training.
+## Showcase
 
-# Documentation
+![Hypergan Mobile released!](https://miro.medium.com/max/1404/1*uJmzGUvoP0WdaQPkkT8s-Q.jpeg)
 
-[API Documentation](https://s3.amazonaws.com/hypergan-apidocs/0.9.0/index.html)
+Run trained models with HyperGAN on your android device!
 
-# Changelog
+Submit your showcase with a pull request!
 
-See the full changelog here:
-[Changelog.md](Changelog.md)
+For more, see the \#showcase room in [![Discord](https://img.shields.io/badge/discord-join%20chat-brightgreen.svg)](https://discord.gg/t4WWBPF)
 
-# Quick start
+## Documentation
 
-## Minimum requirements
+* [Model author JSON reference](json.md)
+* [Model author tutorial 1](tutorial1.md)
+* [0.10.x](https://s3.amazonaws.com/hypergan-apidocs/0.10.0/index.html)
+* [0.9.x](https://s3.amazonaws.com/hypergan-apidocs/0.9.0/index.html)
+* [Test coverage](https://s3.amazonaws.com/hypergan-apidocs/0.10.0/coverage/index.html)
 
-1. For 256x256, we recommend a GTX 1080 or better.  32x32 can be run on lower-end GPUs.
-2. CPU training is _extremely_ slow.  Use a GPU if you can!
-3. Python3
+## Changelog
 
+See the full changelog here: [Changelog.md](changelog.md)
 
-## Install
+## Quick start
 
+### Requirements
 
-### Install hypergan:
+Recommended: GTX 1080+
 
-```bash
-  pip3 install hypergan --upgrade
-```
+### Install
 
-### Optional `virtualenv`:
+#### Comprehensive HyperGAN Installation Tutorial
+
+1. Notes
+   * The point of this guide is to install HyperGAN with GPU support.
+   * Installation tested and working on ElementaryOS 5.0 Juno \(equivilant to Ubuntu 18.04\), NVIDIA GeForce 970M.
+   * Some restarts might be unnecessary, but do them, just to be sure.
+   * If you follow these instructions and need further help, please visit the Discord.
+   * Written 10.29.2019.
+
+     0.5. Disabling Secure Boot
+
+   * From the "GPU Support" page, www.tensorflow.org -
+
+     "Secure Boot complicates installation of the NVIDIA driver and is beyond the scope of these instructions."
+
+   * A quick Google search such as "disable secure boot {motherboard}" will get you more detailed instructions for this step.
+   * After disabling secure boot, restart your computer.
+2. Installing the proper GPU drivers 
+   * We're going to need to update our drivers to be above 410.x to run HyperGAN.
+   * To check what installation you need, use the command `ubuntu-driver devices`.
+   * The name of your graphics card should pop up, with a list of drivers after.
+   * You're going to want to choose the one that states "third party free reccommended".
+   * Go ahead and run the command 'sudo apt-get install nvidia-driver-xxx\` with the correct numbers to update your drivers.
+   * After install, restart your computer.
+   * When rebooted, make sure your drivers are installed properly by running `nvidia-smi`.
+   * The output should show your graphics card model and driver version.
+3. Installing tensorflow-gpu Dependencies
+   * HyperGAN requires the use of Google's TensorFlow to run.
+   * In addition, TensorFlow needs NVIDIA's CUDA toolkit and cuDNN \(NVIDIA CUDA® Deep Neural Network library\).
+   * We're going to be installing 2 things in this section: the CUDA toolkit and the cuDNN.
+     * CUDA toolkit:
+       * [https://developer.nvidia.com/cuda-10.0-download-archive](https://developer.nvidia.com/cuda-10.0-download-archive)
+       * \(It is important that you download the 10.0 version of the toolkit, linked above.\)
+       * Click the buttons to narrow down your target platform.
+       * Once you've selected your OS version, select deb\(local\).
+       * Download this file and follow the instructions on the site to complete installation.
+       * After you have finished following those instructions, restart your computer.
+     * cuDNN:
+       * [https://developer.nvidia.com/rdp/cudnn-download](https://developer.nvidia.com/rdp/cudnn-download)
+       * \(It is important that you download v7.6.4, compatible with the 10.0 version of the CUDA toolkit.\)
+       * To download the cuDNN, you're going to have to sign up for a NVIDIA account.
+       * Create an account \(or sign in with Google\) and log in.
+       * Download cuDNN v7.6.4 for CUDA 10.0. Choose the "cuDNN Runtime Library for UbuntuXX.XX \(Deb\)".
+       * Navigate to where you downloaded the program and use `sudo dpkg -i` followed by the .deb file name to finish installation.
+       * After the package is installed, reboot your computer.
+4. Installing HyperGAN 
+   * Now it is time to install HyperGAN and it's dependencies.
+   * If you haven't installed pip3, install it using `sudo apt-get install python3-pip`.
+   * Run the command \`pip3 install hypergan tensorflow-gpu hyperchamber pillow pygame natsort nashpy'
+   * The newest version of numpy spits out a ton of non-pretty warnings, so we'll install an older version using \`pip3 install numpy==1.16.4'.
+   * Reboot your computer, for the last time.
+5. Checking HyperGAN installation
+   * Test that HyperGAN and TensorFlow are correctly installed on your computer by running the command `hypergan test`.
+   * If you're all good to go and have followed these instructions, a message should be returned saying \`Congratulations! Tensorflow and hypergan both look installed correctly'.
+   * If your installation has been completed, jump to step 6.
+   * If something has gone wrong, continue to step 5.
+6. Troubleshooting
+   * "NVIDIA-SMI has failed because it couldn't communicate with the NVIDIA driver. Make sure that the latest NVIDIA driver is installed and running."
+     * Something has gone wrong with the installation of your drivers.
+     * Run the command \`sudo apt-get purge nvidia-\* && sudo apt-get autoremove'.
+     * Go back to step 1 and retry the driver installation.
+   * "FutureWarning: Passing \(type, 1\) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as \(type, \(1,\)\) / '\(1,\)type'."
+     * This is a warning message. If you want to remove it, downgrade numpy.
+     * Run the command \`pip3 uninstall numpy && pip3 install numpy==1.16.4'.
+   * "ImportError: libcudart.so.10.0: cannot open shared object file: No such file or directory"
+     * This error means that there was a problem installing the CUDA toolkit.
+     * Please reinstall that step of the instructions, making sure you download the 10.0 version.
+   * "ImportError: libcudnn.so.7: cannot open shared object file: No such file or directory"
+     * This error means that there was a problem installing the cuDNN.
+     * Please reinstall that step of the instructions, making sure you download cuDNN v7.6.4 for CUDA 10.0.
+7. Conclusion 
+   * Congrats! Now you're ready to start using HyperGAN.
+   * Once you've made something cool, be sure to share it on the Discord \([https://discord.gg/t4WWBPF](https://discord.gg/t4WWBPF)\).
+
+#### Optional `virtualenv`:
 
 If you use virtualenv:
 
@@ -107,31 +177,16 @@ If you use virtualenv:
   virtualenv --system-site-packages -p python3 hypergan
   source hypergan/bin/activate
 ```
-### Dependencies:
 
-If installation fails try this.
-
-```bash
-  pip3 install numpy tensorflow-gpu hyperchamber pillow pygame
-```
-
-### Dependency help
-
-If the above step fails see the dependency documentation:
-
-* tensorflow - https://www.tensorflow.org/install/
-* pygame  - http://www.pygame.org/wiki/GettingStarted
-
-
-## Create a new project
+### Create a new model
 
 ```bash
   hypergan new mymodel
 ```
 
-This will create a mymodel.json based off the default configuration.  You can change configuration templates with the `-c` flag.  
+This will create a mymodel.json based off the default configuration. You can change configuration templates with the `-c` flag.
 
-## List configuration templates
+### List configuration templates
 
 ```bash
   hypergan new mymodel -l
@@ -139,425 +194,169 @@ This will create a mymodel.json based off the default configuration.  You can ch
 
 See all configuration templates with `--list-templates` or `-l`.
 
-## Train
+### Train
 
 ```bash
   # Train a 32x32 gan with batch size 32 on a folder of folders of pngs, resizing images as necessary
   hypergan train folder/ -s 32x32x3 -f png -c mymodel --resize
 ```
 
-### Increasing performance
-
-On ubuntu `sudo apt-get install libgoogle-perftools4` and make sure to include this environment variable before training
-
-```bash
-  LD_PRELOAD="/usr/lib/libtcmalloc.so.4" hypergan train my_dataset
-```
-
-HyperGAN does not cache image data in memory. Images are loaded every time they're needed, so you can increase performance by pre-processing your inputs, especially by resampling large inputs to the output resolution. e.g. with ImageMagick:
-
-```bash
-  convert image1.jpg -resize '128x128^' -gravity Center -crop 128x128+0+0 image1.png
-```
-
-## Development mode
+### Development mode
 
 If you wish to modify hypergan
 
 ```bash
-git clone https://github.com/255BITS/hypergan
+git clone https://github.com/hypergan/hypergan
 cd hypergan
 python3 setup.py develop
 ```
 
-
-## Running on CPU
+### Running on CPU
 
 Make sure to include the following 2 arguments:
 
 ```bash
 CUDA_VISIBLE_DEVICES= hypergan --device '/cpu:0'
 ```
-Don't train on CPU!  It's too slow.
 
+Don't train on CPU! It's too slow.
 
-# The pip package hypergan
+## The pip package hypergan
 
 ```bash
  hypergan -h
 ```
 
-## Training
+### Training
 
 ```bash
   # Train a 32x32 gan with batch size 32 on a folder of pngs
   hypergan train [folder] -s 32x32x3 -f png -b 32 --config [name]
 ```
 
-## Sampling
+### Sampling
 
 ```bash
-  # Train a 256x256 gan with batch size 32 on a folder of pngs
-  hypergan train [folder] -s 32x32x3 -f png -b 32 --config [name] --sampler static_batch --sample_every 5 --save_samples
+  hypergan sample [folder] -s 32x32x3 -f png -b 32 --config [name] --sampler batch_walk --sample_every 5 --save_samples
 ```
 
-By default hypergan will not save samples to disk.  To change this, use `--save_samples`.
+By default hypergan will not save samples to disk. To change this, use `--save_samples`.
 
 One way a network learns:
 
 [![Demo CountPages alpha](https://j.gifs.com/58KmzA.gif)](https://www.youtube.com/watch?v=tj3ZLNfcJFo&list=PLWW3WtkBA3MuSnAVS__D0FkENZzuTbHFg&index=1)
-
 
 To create videos:
 
 ```bash
   ffmpeg -i samples/%06d.png -vcodec libx264 -crf 22 -threads 0 gan.mp4
 ```
-## Arguments
 
-To see a detailed list, run 
+### Arguments
+
+To see a detailed list, run
+
 ```bash
   hypergan -h
 ```
 
-# API
+### Examples
 
-See the API documentation at https://s3.amazonaws.com/hypergan-apidocs/0.9.0/index.html
+See the example documentation [https://github.com/hypergan/HyperGAN/tree/master/examples](https://github.com/hypergan/HyperGAN/tree/master/examples)
 
-```python3
-  import hypergan as hg
-```
+## Datasets
 
-Examples
---------
+To build a new network you need a dataset. Your data should be structured like:
 
-See the example documentation https://github.com/255BITS/HyperGAN/tree/master/examples
-
-## Search
-
-Each example is capable of random search.  You can search along any set of parameters, including loss functions, trainers, generators, etc.
-
-# Datasets
-
-To build a new network you need a dataset.  Your data should be structured like:
-
-``` 
+```text
   [folder]/[directory]/*.png
 ```
 
-## Creating a Dataset
+### Creating a Dataset
 
-Datasets in HyperGAN are meant to be simple to create.  Just use a folder of images.
+Datasets in HyperGAN are meant to be simple to create. Just use a folder of images.
 
-## Unsupervised learning
-
-The default mode of hypergan.
-
-```
+```text
  [folder]/*.png
 ```
 
-For jpg(pass `-f jpg`)
+For jpg\(pass `-f jpg`\)
 
+### Downloadable datasets
 
-## Supervised learning
+* Loose images of any kind can be used
+* CelebA aligned faces [http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html](http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html)
+* MS Coco [http://mscoco.org/](http://mscoco.org/)
+* ImageNet [http://image-net.org/](http://image-net.org/)
+* youtube-dl \(see [examples/Readme.md](examples/examples.md)\)
 
-Training with labels allows you to train a `classifier`.
+### Cleaning up data
 
-Each directory in your dataset represents a classification.  
+To convert and resize your data for processing, you can use imagemagick
 
-Example:  Dataset setup for classification of apple and orange images:
-```
- /dataset/apples
- /dataset/oranges
-```
-
-You must pass `--classloss` to hypergan cli to activate this feature.
-
-# Configuration
-
-Configuration in HyperGAN uses JSON files.  You can create a new config with the default template by running `hypergan new mymodel`.
-
-You can see all templates with `hypergan new mymodel -l`.
-
-
-## Architecture
-
-A hypergan configuration contains all hyperparameters for reproducing the full GAN.
-
-In the original DCGAN you will have one of the following components:
-
-* Encoder
-* Generator
-* Discriminator
-* Loss
-* Trainer
-
-
-Other architectures may differ.  See the configuration templates.
-
-## GANComponent
-
-A base class for each of the component types listed below.
-
-## Generator
-
-A generator is responsible for projecting an encoding (sometimes called *z space*) to an output (normally an image).  A single GAN object from HyperGAN has one generator.
-
-### Resize Conv
-
-This generator supports any resolution.  Works using a combination of `final_depth` and `depth_increase` in order to scale output size.
-
-
-For example: the shape of `final_depth=16` and `depth_increase=16` when working on images of `64x64x3`
-```
-  64x64x3 -> 32x32x16 -> 16x16x32 -> 8x8x48 -> 4x4x64
+```text
+for i in *.jpg; do convert $i  -resize "300x256" -gravity north   -extent 256x256 -format png -crop 256x256+0+0 +repage $i-256x256.png;done
 ```
 
-The same network on `128x128x3`:
-```
-  128x128x3 -> 64x64x16 -> 32x32x32 -> 16x16x48 -> 8x8x64 -> 4x4x80
-```
+## Contributing
 
-| attribute   | description | type
-|:----------:|:------------:|:----:|
-| final_depth | The features for the last convolution layer(before projecting to final output). | int > 0
-| depth_increase | Working backwards, each previous layer will contain this many more features.| int > 0
-| activation |  Activations to use.  See <a href='#configuration-activations'>activations</a> | f(net):net
-| final_activation | Final activation to use.  This is usually set to tanh to squash the output range. See <a href="#configuration-activations">activations</a>.| f(net):net
-| layer_filter | On each resize of G, we call this method.  Anything returned from this method is added to the graph before the next convolution block.  See <a href='#configuration-layer-filters'>common layer filters</a> | f(net):net
-| layer_regularizer | This "regularizes" each layer of the generator with a type.  See <a href='#layer-regularizers'>layer regularizers</a>| f(name)(net):net
-| block | This is called at each layer of the generator, after the resize. Can also be the string `deconv`| f(...) see source code
-| resize_image_type | See [tf.resize_images](https://www.tensorflow.org/api_docs/python/tf/image/resize_images) for values | enum(int)
+Contributions are welcome and appreciated! We have many open issues in the _Issues_ tab. Join the discord.
 
-## Encoders
+See [how to contribute.](./)
 
-Sometimes referred to as the `z-space` representation or `latent space`.  In `dcgan` the 'encoder' is random uniform noise.
+## Versioning
 
-Can be thought of as input to the `generator`.
+HyperGAN uses semantic versioning. [http://semver.org/](http://semver.org/)
 
-
-### Uniform Encoder
-
-| attribute   | description | type
-|:----------:|:------------:|:----:|
-| z | The dimensions of random uniform noise inputs | int > 0
-| min | Lower bound of the random uniform noise | int
-| max | Upper bound of the random uniform noise | int > min
-| projections | See more about projections below | [f(config, gan, net):net, ...]
-| modes | If using modes, the number of modes to have per dimension | int > 0
-
-
-### Projections
-
-This encoder takes a random uniform value and outputs it as many possible types.  The primary idea is that you are able to query Z as a random uniform distribution, even if the gan is using a spherical representation.
-
-Some projection types are listed below.
-
-#### "identity" projection
-
-<img src='https://raw.githubusercontent.com/255BITS/HyperGAN/master/doc/encoder-linear-linear.png'/>
-
-#### "sphere" projection
-
-<img src='https://raw.githubusercontent.com/255BITS/HyperGAN/master/doc/encoder-linear-sphere.png'/>
-
-#### "gaussian" projection
-
-<img src='https://raw.githubusercontent.com/255BITS/HyperGAN/master/doc/encoder-linear-gaussian.png'/>
-
-#### "modal" projection
-
-One of many
-
-#### "binary" projection
-
-On/Off
-
-
-### Category Encoder
-
-Uses categorical prior to choose 'one-of-many' options.
-
-
-## Discriminators
-
-A discriminator's main purpose(sometimes called a critic) is to separate out G from X, and to give the Generator
-a useful error signal to learn from.
-
-Note a discriminator can be an encoder sometimes(like in the case of AlphaGAN)
-
-### Pyramid Discriminator
-
-Architecturally similar to the ResizeConvGenerator.
-
-For example: the shape of `initial_depth=16` and `depth_increase=16` when working on images of `64x64x3`
-```
-  64x64x3 -> 32x32x16 -> 16x16x32 -> 8x8x48 -> 4x4x64
-```
-
-The same network on `128x128x3`:
-```
-  128x128x3 -> 64x64x16 -> 32x32x32 -> 16x16x48 -> 8x8x64 -> 4x4x80
-```
-
-
-| attribute   | description | type
-|:----------:|:------------:|:----:|
-| activation |  Activations to use.  See <a href='#configuration-activations'>activations</a> | f(net):net
-| initial_depth | The initial number of filters to use. | int > 0
-| depth_increase | Increases the filter sizes on each convolution by this amount | int > 0
-| final_activation | Final activation to use.  None is common here, and is required for several loss functions. | f(net):net
-| layers | The number of convolution layers | int > 0
-| layer_filter | Append information to each layer of the discriminator | f(config, net):net
-| layer_regularizer | batch_norm_1, layer_norm_1, or None | f(batch_size, name)(net):net
-| fc_layer_size | The size of the linear layers at the end of this network(if any). | int > 0
-| fc_layers | fully connected layers at the end of the discriminator(standard dcgan is 0) | int >= 0
-| noise | Instance noise.  Can be added to the input X | float >= 0
-| progressive_enhancement | If true, enable [progressive enhancement](#progressive-enhancement) | boolean
-
-
-## Losses
-
-## WGAN
-
-Wasserstein Loss is simply:
-
-```python
- d_loss = d_real - d_fake
- g_loss = d_fake
-```
-
-d_loss and g_loss can be reversed as well - just add a '-' sign.
-
-## Least-Squares GAN
-
-```python
- d_loss = (d_real-b)**2 - (d_fake-a)**2
- g_loss = (d_fake-c)**2
-```
-
-a, b, and c are all hyperparameters.
-
-### Standard GAN and Improved GAN
-
-Includes support for Improved GAN.  See `hypergan/losses/standard_gan_loss.py` for details.
-
-### Supervised loss
-
-Supervised loss is for labeled datasets.  This uses a standard softmax loss function on the outputs of the discriminator.
-
-### Categorical loss
-
-This is currently untested.
-
-### Cramer loss
-
-No good results yet
-
-### Softmax loss
-
-Not working as well as the others
-
-### Boundary Equilibrium Loss
-
-Use with the `AutoencoderDiscriminator`.
-
-See the `began` configuration template.
-
-### Loss configuration
-
-| attribute   | description | type
-|:----------:|:------------:|:----:|
-| batch_norm | batch_norm_1, layer_norm_1, or None | f(batch_size, name)(net):net
-| create | Called during graph creation | f(config, gan, net):net
-| discriminator |  Set to restrict this loss to a single discriminator(defaults to all) | int >= 0 or None
-| label_smooth | improved gan - Label smoothing. | float > 0
-| labels | lsgan - A triplet of values containing (a,b,c) terms. | [a,b,c] floats
-| reduce | Reduces the output before applying loss | f(net):net
-| reverse | Reverses the loss terms, if applicable | boolean
-
-## Trainers
-
-Determined by the GAN implementation.  These variables are the same across all trainers.
-
-### Configuration
-
-| attribute   | description | type
-|:----------:|:------------:|:----:|
-| g_learn_rate | Learning rate for the generator | float >= 0
-| g_beta1 | (adam) | float >= 0
-| g_beta2 | (adam)  | float >= 0
-| g_epsilon | (adam)  | float >= 0
-| g_decay | (rmsprop)  | float >= 0
-| g_momentum | (rmsprop)  | float >= 0
-| d_learn_rate | Learning rate for the discriminator | float >= 0
-| d_beta1 | (adam) | float >= 0
-| d_beta2 | (adam)  | float >= 0
-| d_epsilon | (adam)  | float >= 0
-| d_decay | (rmsprop)  | float >= 0
-| d_momentum | (rmsprop)  | float >= 0
-| clipped_gradients | If set, gradients will be clipped to this value. | float > 0 or None
-| d_clipped_weights | If set, the discriminator will be clipped by value. |float > 0 or None
-
-
-## Downloadable datasets
-
-* CelebA aligned faces http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html
-* MS Coco http://mscoco.org/
-* ImageNet http://image-net.org/
-
-# Contributing
-
-Contributions are welcome and appreciated!  We have many open issues in the *Issues* tab.
-
-See <a href='CONTRIBUTING.md'>how to contribute.</a>
-
-# Versioning
-
-HyperGAN uses semantic versioning.  http://semver.org/
-
-TLDR: *x.y.z*
+TLDR: _x.y.z_
 
 * _x_ is incremented on stable public releases.
 * _y_ is incremented on API breaking changes.  This includes configuration file changes and graph construction changes.
-* _z_ is incremented on non-API breaking changes.  *z* changes will be able to reload a saved graph.
+* _z_ is incremented on non-API breaking changes.  _z_ changes will be able to reload a saved graph.
 
-## Papers
+### Other GAN projects
 
-* GAN - https://arxiv.org/abs/1406.2661
-* DCGAN - https://arxiv.org/abs/1511.06434
-* InfoGAN - https://arxiv.org/abs/1606.03657
-* Improved GAN - https://arxiv.org/abs/1606.03498
-* Adversarial Inference - https://arxiv.org/abs/1606.00704
-* Energy-based Generative Adversarial Network - https://arxiv.org/abs/1609.03126
-* Wasserstein GAN - https://arxiv.org/abs/1701.07875
-* Least Squares GAN - https://arxiv.org/pdf/1611.04076v2.pdf
-* Boundary Equilibrium GAN - https://arxiv.org/abs/1703.10717
-* Self-Normalizing Neural Networks - https://arxiv.org/abs/1706.02515
+* [StyleGAN](https://github.com/NVlabs/stylegan)
+* [https://github.com/LMescheder/GAN\_stability](https://github.com/LMescheder/GAN_stability)
+* Add yours with a pull request
+
+### Papers
+
+* GAN - [https://arxiv.org/abs/1406.2661](https://arxiv.org/abs/1406.2661)
+* DCGAN - [https://arxiv.org/abs/1511.06434](https://arxiv.org/abs/1511.06434)
+* InfoGAN - [https://arxiv.org/abs/1606.03657](https://arxiv.org/abs/1606.03657)
+* Improved GAN - [https://arxiv.org/abs/1606.03498](https://arxiv.org/abs/1606.03498)
+* Adversarial Inference - [https://arxiv.org/abs/1606.00704](https://arxiv.org/abs/1606.00704)
+* Energy-based Generative Adversarial Network - [https://arxiv.org/abs/1609.03126](https://arxiv.org/abs/1609.03126)
+* Wasserstein GAN - [https://arxiv.org/abs/1701.07875](https://arxiv.org/abs/1701.07875)
+* Least Squares GAN - [https://arxiv.org/pdf/1611.04076v2.pdf](https://arxiv.org/pdf/1611.04076v2.pdf)
+* Boundary Equilibrium GAN - [https://arxiv.org/abs/1703.10717](https://arxiv.org/abs/1703.10717)
+* Self-Normalizing Neural Networks - [https://arxiv.org/abs/1706.02515](https://arxiv.org/abs/1706.02515)
 * Variational Approaches for Auto-Encoding
-Generative Adversarial Networks - https://arxiv.org/pdf/1706.04987.pdf
-* CycleGAN - https://junyanz.github.io/CycleGAN/
-* DiscoGAN - https://arxiv.org/pdf/1703.05192.pdf
-* Softmax GAN - https://arxiv.org/abs/1704.06191
-* The Cramer Distance as a Solution to Biased Wasserstein Gradients - https://arxiv.org/abs/1705.10743
-* Improved Training of Wasserstein GANs - https://arxiv.org/abs/1704.00028
 
-## Sources
+  Generative Adversarial Networks - [https://arxiv.org/pdf/1706.04987.pdf](https://arxiv.org/pdf/1706.04987.pdf)
 
-* DCGAN - https://github.com/carpedm20/DCGAN-tensorflow
-* InfoGAN - https://github.com/openai/InfoGAN
-* Improved GAN - https://github.com/openai/improved-gan
-* Hyperchamber - https://github.com/255bits/hyperchamber
+* CycleGAN - [https://junyanz.github.io/CycleGAN/](https://junyanz.github.io/CycleGAN/)
+* DiscoGAN - [https://arxiv.org/pdf/1703.05192.pdf](https://arxiv.org/pdf/1703.05192.pdf)
+* Softmax GAN - [https://arxiv.org/abs/1704.06191](https://arxiv.org/abs/1704.06191)
+* The Cramer Distance as a Solution to Biased Wasserstein Gradients - [https://arxiv.org/abs/1705.10743](https://arxiv.org/abs/1705.10743)
+* Improved Training of Wasserstein GANs - [https://arxiv.org/abs/1704.00028](https://arxiv.org/abs/1704.00028)
+* More...
 
-# Citation
+### Sources
 
-If you wish to cite this project, do so like this:
+* DCGAN - [https://github.com/carpedm20/DCGAN-tensorflow](https://github.com/carpedm20/DCGAN-tensorflow)
+* InfoGAN - [https://github.com/openai/InfoGAN](https://github.com/openai/InfoGAN)
+* Improved GAN - [https://github.com/openai/improved-gan](https://github.com/openai/improved-gan)
 
-```
-  255bits(Martyn, Mikkel et al),
-  HyperGAN, (2017), 
+## Citation
+
+```text
+  HyperGAN Community
+  HyperGAN, (2016-2019+), 
   GitHub repository, 
-  https://github.com/255BITS/HyperGAN
+  https://github.com/HyperGAN/HyperGAN
 ```
+
+HyperGAN comes with no warranty or support.
 

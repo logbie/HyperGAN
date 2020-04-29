@@ -1,9 +1,9 @@
-import matplotlib.pyplot as plt
 import argparse
 import tensorflow as tf
 import hypergan as hg
 import hyperchamber as hc
 import numpy as np
+import random
 
 from hypergan.cli import CLI
 from hypergan.gan_component import GANComponent
@@ -46,158 +46,12 @@ class ArgumentParser:
         parser.add_argument('--crop', type=bool, default=False, help='If your images are perfectly sized you can skip cropping.')
         parser.add_argument('--format', '-f', type=str, default='png', help='jpg or png')
         parser.add_argument('--size', '-s', type=str, default='64x64x3', help='Size of your data.  For images it is widthxheightxchannels.')
+        parser.add_argument('--zoom', '-z', type=int, default=1, help='Zoom level')
         parser.add_argument('--sampler', type=str, default=None, help='Select a sampler.  Some choices: static_batch, batch, grid, progressive')
         return parser
 
     def parse_args(self):
         return self.parser.parse_args()
-
-class CustomGenerator(BaseGenerator):
-    def create(self):
-        gan = self.gan
-        config = self.config
-        ops = self.ops
-        end_features = config.end_features or 1
-
-        ops.describe('custom_generator')
-
-        net = gan.inputs.x
-        net = ops.linear(net, end_features)
-        net = ops.lookup('tanh')(net)
-        self.sample = net
-        return net
-
-class Custom2DGenerator(BaseGenerator):
-    def create(self):
-        gan = self.gan
-        config = self.config
-        ops = self.ops
-        end_features = config.end_features or 1
-
-        ops.describe('custom_generator')
-
-        net = gan.encoder.sample
-        net = ops.linear(net, 128)
-        net = ops.lookup('relu')(net)
-        net = ops.linear(net, end_features)
-        net = ops.lookup('tanh')(net)
-        self.sample = net
-        return net
-
-class CustomDiscriminator(BaseGenerator):
-    def build(self, net):
-        gan = self.gan
-        config = self.config
-        ops = self.ops
-        ops.describe('custom_discriminator')
-
-        end_features = 1
-
-        x = gan.inputs.x
-        y = gan.inputs.y
-        g = gan.generator.sample
-
-        gnet = tf.concat(axis=1, values=[x,g])
-        ynet = tf.concat(axis=1, values=[x,y])
-
-        net = tf.concat(axis=0, values=[ynet, gnet])
-        net = ops.linear(net, 128)
-        net = tf.nn.tanh(net)
-        self.sample = net
-
-        return net
-
-class Custom2DDiscriminator(BaseGenerator):
-    def create(self):
-        gan = self.gan
-        x = gan.inputs.x
-        g = gan.generator.sample
-        net = tf.concat(axis=0, values=[x,g])
-        net = self.build(net)
-        self.sample = net
-        return net
-
-    def build(self, net):
-        gan = self.gan
-        config = self.config
-        ops = self.ops
-        ops.describe('custom_discriminator')
-
-        end_features = 1
-
-        net = ops.linear(net, 128)
-        net = tf.nn.relu(net)
-        net = ops.linear(net, 2)
-        self.sample = net
-
-        return net
-    def reuse(self, net):
-        self.ops.reuse()
-        net = self.build(net)
-        self.ops.stop_reuse()
-        return net 
-class Custom2DSampler(BaseSampler):
-    def sample(self, filename, save_samples):
-        gan = self.gan
-        generator = gan.generator.sample
-
-        sess = gan.session
-        config = gan.config
-        x_v, z_v = sess.run([gan.inputs.x, gan.encoder.z])
-
-        sample = sess.run(generator, {gan.inputs.x: x_v, gan.encoder.z: z_v})
-
-        plt.clf()
-        fig = plt.figure(figsize=(3,3))
-        plt.scatter(*zip(*x_v), c='b')
-        plt.scatter(*zip(*sample), c='r')
-        plt.xlim([-2, 2])
-        plt.ylim([-2, 2])
-        plt.ylabel("z")
-        fig.canvas.draw()
-        data = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
-        data = data.reshape(fig.canvas.get_width_height()[::-1] + (3,))
-        #plt.savefig(filename)
-        self.plot(data, filename, save_samples)
-        return [{'image': filename, 'label': '2d'}]
-
-
-class Custom2DInputDistribution:
-    def __init__(self, args):
-        with tf.device(args.device):
-            def circle(x):
-                spherenet = tf.square(x)
-                spherenet = tf.reduce_sum(spherenet, 1)
-                lam = tf.sqrt(spherenet)
-                return x/tf.reshape(lam,[int(lam.get_shape()[0]), 1])
-
-            def modes(x):
-                return tf.round(x*2)/2.0
-
-            if args.distribution == 'circle':
-                x = tf.random_normal([args.batch_size, 2])
-                x = circle(x)
-            elif args.distribution == 'modes':
-                x = tf.random_uniform([args.batch_size, 2], -1, 1)
-                x = modes(x)
-            elif args.distribution == 'sin':
-                x = tf.random_uniform((1, args.batch_size), -10.5, 10.5 )
-                x = tf.transpose(x)
-                r_data = tf.random_normal((args.batch_size,1), mean=0, stddev=0.1)
-                xy = tf.sin(0.75*x)*7.0+x*0.5+r_data*1.0
-                x = tf.concat([xy,x], 1)/16.0
-
-            elif args.distribution == 'arch':
-                offset1 = tf.random_uniform((1, args.batch_size), -10, 10 )
-                xa = tf.random_uniform((1, 1), 1, 4 )
-                xb = tf.random_uniform((1, 1), 1, 4 )
-                x1 = tf.random_uniform((1, args.batch_size), -1, 1 )
-                xcos = tf.cos(x1*np.pi + offset1)*xa
-                xsin = tf.sin(x1*np.pi + offset1)*xb
-                x = tf.transpose(tf.concat([xcos,xsin], 0))/16.0
-
-            self.x = x
-            self.xy = tf.zeros_like(self.x)
 
 def batch_diversity(net):
     bs = int(net.get_shape()[0])
@@ -212,8 +66,11 @@ def batch_diversity(net):
     net -= avg
     return tf.reduce_sum(tf.abs(net))
 
-def batch_accuracy(a, b):
-    "Each point of a is measured against the closest point on b.  Distance differences are added together."
+def distribution_accuracy(a, b):
+    """
+    Each point of a is measured against the closest point on b.  Distance differences are added together.  
+    
+    This works best on a large batch of small inputs."""
     tiled_a = a
     tiled_a = tf.reshape(tiled_a, [int(tiled_a.get_shape()[0]), 1, int(tiled_a.get_shape()[1])])
 
@@ -228,8 +85,8 @@ def batch_accuracy(a, b):
     difference = tf.reduce_sum(difference, axis=1)
     return tf.reduce_sum(difference, axis=0) 
 
-def accuracy(a, b):
-    "Each point of a is measured against the closest point on b.  Distance differences are added together."
+def batch_accuracy(a, b):
+    "Difference from a to b.  Meant for reconstruction measurements."
     difference = tf.abs(a-b)
     difference = tf.reduce_min(difference, axis=1)
     difference = tf.reduce_sum(difference, axis=1)
@@ -276,6 +133,8 @@ class TextInput:
         self.x = x
         self.table = table
 
+    def inputs(self):
+        return [self.x]
     def get_vocabulary(self):
         vocab = list("~()\"'&+#@/789zyxwvutsrqponmlkjihgfedcba ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456:-,;!?.")
         return vocab
@@ -340,9 +199,6 @@ class TextInput:
             return string
 
 
-def lookup_sampler(name):
-    return CLI.sampler_for(name)
-
 def parse_size(size):
     width = int(size.split("x")[0])
     height = int(size.split("x")[1])
@@ -350,7 +206,7 @@ def parse_size(size):
     return [width, height, channels]
 
 def lookup_config(args):
-    if args.action == 'train' or args.action == 'sample':
+    if args.action != 'search':
         return hg.configuration.Configuration.load(args.config+".json")
     
 def random_config_from_list(config_list_file):

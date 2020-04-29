@@ -4,7 +4,7 @@ from hypergan.ops import TensorflowOps
 from hypergan.search.default_configurations import DefaultConfigurations
 
 from hypergan.gans.base_gan import BaseGAN
-from hypergan.generators.resize_conv_generator import ResizeConvGenerator
+from hypergan.generators.resizable_generator import ResizableGenerator
 import hypergan as hg
 import tensorflow as tf
 import hyperchamber as hc
@@ -12,7 +12,7 @@ import numpy as np
 from hypergan.gan_component import ValidationException, GANComponent
 
 from unittest.mock import MagicMock
-from tests.mocks import MockInput
+from tests.mocks import MockDiscriminator, mock_gan, MockInput
 
 default_config = hg.Configuration.default()
 
@@ -44,14 +44,6 @@ class BaseGanTest(tf.test.TestCase):
             gan = BaseGAN(inputs = MockInput())
             self.assertEqual(gan.height(), 32)
 
-    def test_create(self):
-        with self.test_session():
-            gan = BaseGAN(inputs = MockInput())
-            gan.create()
-            self.assertEqual(gan.created, True)
-            with self.assertRaises(ValidationException):
-                gan.create()
-
     def test_get_config_value(self):
         with self.test_session():
             gan = BaseGAN(inputs = MockInput())
@@ -60,9 +52,9 @@ class BaseGanTest(tf.test.TestCase):
 
     def test_create_component(self):
         with self.test_session():
-            gan = BaseGAN(inputs = MockInput())
-            encoder = gan.create_component(gan.config.encoder)
-            self.assertEqual(type(encoder), hg.encoders.uniform_encoder.UniformEncoder)
+            gan = mock_gan()
+            distribution = gan.create_component(gan.config.latent)
+            self.assertEqual(type(distribution), hg.distributions.uniform_distribution.UniformDistribution)
 
 if __name__ == "__main__":
     tf.test.main()

@@ -1,52 +1,105 @@
 
 {
-  "description": "Least Squares GAN optimized",
-
+  "description": "A default configuration that scales to multiple resolutionse Note that the other resolution specific configs may perform better.",
   "discriminator": 
   {
-    "class": "class:hypergan.discriminators.pyramid_discriminator.PyramidDiscriminator",
-    "layers": 4,
-    "final_activation": "tanh",
-    "block": "function:hypergan.discriminators.common.strided_block",
-    "fc_layers": 1,
-    "initial_depth": 64,
-    "activation": "selu",
-    "depth_increase": 64
+    "class": "class:hypergan.discriminators.configurable_discriminator.ConfigurableDiscriminator",
+    "defaults":{
+       "activation": "lrelu",
+      "filter": [3,3],
+      "stride": [1,1],
+      "avg_pool": [2,2],
+      "activation": "lrelu",
+      "initializer": "he_normal",
+      "random_stddev": 0.02
+    },
+    "layers":[
+      "conv 32 ", 
+      "conv 64 ", 
+      "conv 128",
+      "conv 256",
+      "conv 512",
+      "linear 1 activation=null initializer=stylegan bias=false"
+    ]
   },
 
-  "encoder":
+  "latent":
   {
-    "class": "function:hypergan.encoders.uniform_encoder.UniformEncoder",
-    "projections": [
-      "function:hypergan.encoders.uniform_encoder.identity"
-    ],
+    "class": "function:hypergan.distributions.uniform_distribution.UniformDistribution",
     "min": -1,
     "max": 1,
     "z": 100
   },
   "generator": {
-    "class": "function:hypergan.generators.resize_conv_generator.ResizeConvGenerator",
-    "activation": "selu",
-    "depth_increase": 64,
-    "final_activation": "tanh",
-    "final_depth": 64,
-    "block": "function:hypergan.generators.common.standard_block"
+    "class": "function:hypergan.generators.resizable_generator.ResizableGenerator",
+    "defaults":{
+      "initializer": "he_normal",
+      "activation": "relu"
+    },
+    "final_activation": "clamped_unit",
+    "final_depth": 32,
+    "adaptive_instance_norm": true,
+    "adaptive_instance_norm_layers": 2,
+    "block": "resize_conv"
   },
-
-
-  "loss":
-  {
-    "class": "function:hypergan.losses.least_squares_loss.LeastSquaresLoss",
-    "reduce": "reduce_mean",
-    "labels": [0,1,1]
+ "loss": {
+    "class": "function:hypergan.losses.logistic_loss.LogisticLoss",
+    "reduce": "reduce_mean"
   },
+  "fixed_input": true,
   "trainer": {
-    "class": "class:hypergan.trainers.alternating_trainer.AlternatingTrainer",
-    "d_beta1": 0.5,
-    "d_learn_rate": 0.0001,
-    "d_trainer": "class:tensorflow.python.training.adam.AdamOptimizer",
-    "g_beta1": 0.5,
-    "g_learn_rate": 0.0001,
-    "g_trainer": "class:tensorflow.python.training.adam.AdamOptimizer"
-  }
+    "class": "function:hypergan.trainers.batch_fitness_trainer.BatchFitnessTrainer",
+    "heuristic": 0,
+    "search_steps": 100000,
+    "trainer": {
+      "class": "function:hypergan.trainers.simultaneous_trainer.SimultaneousTrainer",
+      "optimizer": {
+        "class": "function:hypergan.optimizers.curl_optimizer.CurlOptimizer",
+        "learn_rate": 0.00001,
+        "d_rho": 1.0,
+        "g_rho": 1.0,
+
+        "optimizer": {
+          "class": "function:hypergan.optimizers.experimental.negative_momentum_optimizer.NegativeMomentumOptimizer",
+          "decay": 1.0,
+          "alpha": 0.5,
+          "beta": 0.66,
+          "optimizer": {
+            "class": "function:tensorflow.python.training.adam.AdamOptimizer",
+            "learn_rate": 1e-4,
+            "beta1":0.0,
+            "beta2":0.999
+          }
+        }
+
+      },
+      "hooks":[
+        {
+          "class": "function:hypergan.train_hooks.experimental.input_fitness_train_hook.InputFitnessTrainHook",
+          "heuristic": 0,
+          "search_steps": 100000
+        },
+        {
+          "class": "function:hypergan.train_hooks.experimental.match_support_train_hook.MatchSupportTrainHook",
+          "variables": ["generator"],
+          "loss_threshold": 1.0,
+          "loss": "fixed2",
+          "max_steps": 100,
+          "max_depth": 1,
+          "optimizer": {
+            "class": "function:tensorflow.python.training.adam.AdamOptimizer",
+            "learn_rate": 1e-4,
+            "beta1":0.0,
+            "beta2":0.999
+          }
+        }
+      ]
+    }
+  },
+  "runtime": {
+    "anysize": true,
+    "train": "hypergan train [dataset] --sampler static_batch -b 8 --size 64x64x3"
+  },
+  "hypergan_version": "0.10.0",
+  "class": "class:hypergan.gans.standard_gan.StandardGAN"
 }
